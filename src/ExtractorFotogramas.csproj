@@ -12,6 +12,7 @@
     <Product>Extractor de Fotogramas</Product>
     <AssemblyTitle>Extractor de Fotogramas</AssemblyTitle>
     <Description>Extracción de fotogramas por segundo completo con FFmpeg y reporte de hashes SHA-256 y SHA-512</Description>
+    <Copyright>Copyright (c) 2026 Andres Alonzo. Licencia MIT.</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

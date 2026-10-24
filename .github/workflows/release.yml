@@ -51,6 +51,7 @@ jobs:
           $ffmpegRoot = "ffmpeg-download/ffmpeg-$env:FFMPEG_VERSION-essentials_build"
           New-Item -ItemType Directory -Path "$env:PACKAGE_DIR/ffmpeg" | Out-Null
           Copy-Item build/ExtractorFotogramas.exe, build/ExtractorFotogramas.exe.config, package/LEEME.txt $env:PACKAGE_DIR
+          Copy-Item LICENSE "$env:PACKAGE_DIR/LICENSE.txt"
           Copy-Item "$ffmpegRoot/bin/ffmpeg.exe", "$ffmpegRoot/bin/ffprobe.exe" "$env:PACKAGE_DIR/ffmpeg"
           Copy-Item "$ffmpegRoot/LICENSE" "$env:PACKAGE_DIR/ffmpeg/LICENSE.txt"
           $zip = "ExtractorFotogramas-${{ steps.version.outputs.version }}-portable.zip"

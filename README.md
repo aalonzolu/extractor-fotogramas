@@ -41,6 +41,12 @@ git push origin v1.6.1
 
 También se puede lanzar a mano desde la pestaña **Actions**, indicando la versión.
 
-## FFmpeg
+## Contribuir
 
-El ZIP portable incluye `ffmpeg.exe` y `ffprobe.exe` de la compilación *essentials* de [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), distribuidos bajo la licencia GPL (incluida en `ffmpeg/LICENSE.txt`). El código fuente de FFmpeg está en [ffmpeg.org](https://ffmpeg.org/).
+Las contribuciones son bienvenidas: abre un *issue* para reportar un problema o proponer una mejora, o envía un *pull request* con el cambio.
+
+## Licencia
+
+El código de este programa se distribuye bajo la [licencia MIT](LICENSE): se puede usar, modificar y redistribuir libremente, también con fines comerciales, conservando el aviso de copyright.
+
+El ZIP portable incluye `ffmpeg.exe` y `ffprobe.exe` de la compilación *essentials* de [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), que son programas aparte distribuidos bajo su propia licencia GPL (incluida en `ffmpeg/LICENSE.txt`). El código fuente de FFmpeg está en [ffmpeg.org](https://ffmpeg.org/).
