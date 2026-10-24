@@ -178,10 +178,10 @@ namespace ExtractorFotogramas
             return (long)(timestamp.ToUniversalTime() - UnixEpoch).TotalSeconds;
         }
 
-        public static string OutputDirectoryFor(string fullVideoPath, DateTime timestamp)
+        public static string OutputDirectoryFor(string destinationWithSeparator, string fullVideoPath, DateTime timestamp)
         {
             var folderName = "Fotogramas_" + Path.GetFileNameWithoutExtension(fullVideoPath) + "_" + ToEpochSeconds(timestamp);
-            return LongPathFileSystem.GetDirectoryWithSeparator(fullVideoPath) + folderName;
+            return destinationWithSeparator + folderName;
         }
 
         public static PaddingEstimate PaddingFor(VideoInfo video)

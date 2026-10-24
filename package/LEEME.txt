@@ -37,6 +37,12 @@ video original, en una carpeta nueva por cada extracción:
   Fotogramas_<nombre del video>_<fecha en epoch>
 Así nunca se mezclan resultados de extracciones distintas.
 
+Para guardarlos en otro lugar, presiona "Cambiar carpeta..." antes de
+extraer; para volver a la carpeta del video, "Usar la carpeta del video".
+Si el video está en un disco de solo lectura (un DVD o un disco conectado
+con bloqueador de escritura), el programa lo detecta y pide elegir otra
+carpeta, sin escribir nada en ese disco.
+
 El reporte incluye los hashes SHA-256 y SHA-512 del video original y de
 cada fotograma, la fecha, los tiempos solicitados, el formato del video y
 la versión y parámetros de FFmpeg usados.

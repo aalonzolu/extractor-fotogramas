@@ -68,6 +68,10 @@ namespace ExtractorFotogramas
         readonly ListBox selectionList = new ListBox();
         readonly Button removeSelectionButton;
 
+        readonly Label destinationLabel = new Label();
+        readonly Button changeDestinationButton;
+        readonly Button useVideoFolderButton;
+        FlowLayoutPanel destinationButtons;
         readonly Label estimateLabel = new Label();
         readonly Button extractButton;
 
@@ -94,6 +98,8 @@ namespace ExtractorFotogramas
         string videoPath;
         string videoError;
         VideoInfo video;
+        string chosenDestination;
+        bool destinationReadOnly;
         long? freeBytes;
         bool hasEnoughSpace = true;
         bool probing;
@@ -114,6 +120,8 @@ namespace ExtractorFotogramas
         {
             addSelectionButton = SecondaryButton("Agregar momento");
             removeSelectionButton = SecondaryButton("Quitar");
+            changeDestinationButton = SecondaryButton("Cambiar carpeta...");
+            useVideoFolderButton = SecondaryButton("Usar la carpeta del video");
             extractButton = PrimaryButton("Extraer fotogramas");
             cancelButton = SecondaryButton("Cancelar");
             openFolderButton = SecondaryButton("Abrir carpeta");
@@ -410,6 +418,13 @@ namespace ExtractorFotogramas
                 Margin = new Padding(0, 0, 0, 12),
             };
             area.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            destinationLabel.Margin = new Padding(2, 0, 2, 6);
+            area.Controls.Add(Wrap(destinationLabel, 4));
+            changeDestinationButton.Click += (sender, e) => BrowseForDestination();
+            useVideoFolderButton.Click += (sender, e) => ChangeDestination(null);
+            destinationButtons = Row(changeDestinationButton, useVideoFolderButton);
+            destinationButtons.Margin = new Padding(0, 0, 0, 14);
+            area.Controls.Add(destinationButtons);
             estimateLabel.Margin = new Padding(2, 0, 2, 8);
             area.Controls.Add(Wrap(estimateLabel, 4));
             extractButton.Click += OnExtractClick;
@@ -693,7 +708,7 @@ namespace ExtractorFotogramas
                 {
                     info.AssumedFrameRate = (int)rawFrameRateBox.Value;
                     video = info;
-                    freeBytes = LongPathFileSystem.FreeBytesAvailable(candidate);
+                    SetDestination(chosenDestination);
                     UpdatePickerLimits();
                 }
                 else
@@ -728,6 +743,43 @@ namespace ExtractorFotogramas
             {
                 return null;
             }
+        }
+
+        string DestinationDirectory
+        {
+            get { return chosenDestination ?? LongPathFileSystem.GetDirectoryWithSeparator(videoPath); }
+        }
+
+        void BrowseForDestination()
+        {
+            if (video == null || running) return;
+            using (var dialog = new FolderBrowserDialog
+            {
+                Description = "Elige la carpeta donde se guardarán los fotogramas y el reporte de hashes.",
+                SelectedPath = LongPathFileSystem.ForDisplay(DestinationDirectory),
+            })
+            {
+                if (dialog.ShowDialog(this) == DialogResult.OK && dialog.SelectedPath.Length > 0)
+                {
+                    ChangeDestination(LongPathFileSystem.WithSeparator(LongPathFileSystem.GetFullPath(dialog.SelectedPath)));
+                }
+            }
+        }
+
+        void ChangeDestination(string directoryWithSeparator)
+        {
+            SetDestination(directoryWithSeparator);
+            HideResult();
+            RefreshView();
+        }
+
+        void SetDestination(string directoryWithSeparator)
+        {
+            var besideVideo = directoryWithSeparator == null || string.Equals(directoryWithSeparator,
+                LongPathFileSystem.GetDirectoryWithSeparator(videoPath), StringComparison.OrdinalIgnoreCase);
+            chosenDestination = besideVideo ? null : directoryWithSeparator;
+            freeBytes = LongPathFileSystem.FreeBytesAvailable(DestinationDirectory);
+            destinationReadOnly = LongPathFileSystem.IsOnReadOnlyVolume(DestinationDirectory);
         }
 
         void OnRawFrameRateChanged()
@@ -857,9 +909,10 @@ namespace ExtractorFotogramas
             selectionRow.Visible = ranges.Count > 0;
             removeSelectionButton.Enabled = editable && selectionList.SelectedIndex >= 0;
 
+            UpdateDestination(videoReady, editable);
             UpdateEstimate(videoReady);
             var hasSelection = wholeVideoOption.Checked || ranges.Count > 0;
-            extractButton.Enabled = editable && videoReady && hasSelection && hasEnoughSpace;
+            extractButton.Enabled = editable && videoReady && hasSelection && hasEnoughSpace && !destinationReadOnly;
 
             progressCard.Visible = running;
             cancelButton.Enabled = running && !cancelRequested && currentStep < 3;
@@ -943,6 +996,31 @@ namespace ExtractorFotogramas
                 : text;
         }
 
+        void UpdateDestination(bool videoReady, bool editable)
+        {
+            destinationLabel.Visible = videoReady;
+            destinationButtons.Visible = videoReady;
+            if (!videoReady) return;
+
+            var besideVideo = chosenDestination == null;
+            changeDestinationButton.Enabled = editable;
+            useVideoFolderButton.Enabled = editable;
+            useVideoFolderButton.Visible = !besideVideo;
+            if (destinationReadOnly)
+            {
+                destinationLabel.Text = (besideVideo
+                        ? "El video está en un disco de solo lectura, así que los resultados no se pueden guardar junto a él."
+                        : "La carpeta elegida está en un disco de solo lectura.")
+                    + " Presiona \"Cambiar carpeta\" y elige una carpeta en otro disco.";
+                destinationLabel.ForeColor = ErrorText;
+                return;
+            }
+            destinationLabel.Text = "Se guardará en una carpeta nueva dentro de "
+                + (besideVideo ? "la carpeta del video:" : "la carpeta que elegiste:") + "\n"
+                + LongPathFileSystem.ForDisplay(DestinationDirectory);
+            destinationLabel.ForeColor = MutedText;
+        }
+
         void UpdateEstimate(bool videoReady)
         {
             hasEnoughSpace = true;
@@ -974,7 +1052,7 @@ namespace ExtractorFotogramas
                 text = hasEnoughSpace
                     ? text + " Espacio libre en el disco: " + FormatSize(freeBytes.Value) + "."
                     : "No hay suficiente espacio en el disco: se necesitan aprox. " + FormatSize(bytes) + " y solo hay "
-                        + FormatSize(freeBytes.Value) + " libres. Libera espacio o copia el video a otro disco.";
+                        + FormatSize(freeBytes.Value) + " libres. Libera espacio o elige otra carpeta con \"Cambiar carpeta\".";
             }
             estimateLabel.Text = text;
             estimateLabel.ForeColor = hasEnoughSpace ? MutedText : ErrorText;
@@ -1027,12 +1105,14 @@ namespace ExtractorFotogramas
             extractingWholeVideo = selectedRanges == null;
             var padding = FrameExtraction.PaddingFor(info);
 
-            var extractionDirectory = FrameExtraction.OutputDirectoryFor(sourcePath, startedAt);
+            var destination = DestinationDirectory;
+            var besideVideo = chosenDestination == null;
+            var extractionDirectory = FrameExtraction.OutputDirectoryFor(destination, sourcePath, startedAt);
             if (LongPathFileSystem.DirectoryExists(extractionDirectory))
             {
                 throw new IOException("Ya existe la carpeta de salida: " + extractionDirectory);
             }
-            LongPathFileSystem.CreateDirectory(extractionDirectory);
+            CreateOutputDirectory(extractionDirectory, destination);
             outputDirectory = extractionDirectory;
 
             var selection = extractingWholeVideo
@@ -1154,7 +1234,7 @@ namespace ExtractorFotogramas
 
             var folderName = Path.GetFileName(extractionDirectory);
             var saved = "Se guardaron " + extractedCount + " fotogramas y su reporte de hashes SHA-256 y SHA-512 en la carpeta \""
-                + folderName + "\", junto al video original.";
+                + folderName + "\"" + (besideVideo ? ", junto al video original." : ", dentro de " + LongPathFileSystem.ForDisplay(destination) + ".");
             if (warnings.Count > 0)
             {
                 ShowResult(Outcome.Warning, "Extracción terminada, con advertencias",
@@ -1163,6 +1243,20 @@ namespace ExtractorFotogramas
                 return;
             }
             ShowResult(Outcome.Success, "Extracción terminada", saved, canOpenFolder: true, canViewReport: true);
+        }
+
+        static void CreateOutputDirectory(string extractionDirectory, string destination)
+        {
+            try
+            {
+                LongPathFileSystem.CreateDirectory(extractionDirectory);
+            }
+            catch (IOException exception)
+            {
+                throw new IOException("No se pudo crear la carpeta de resultados en " + LongPathFileSystem.ForDisplay(destination)
+                    + ". Puede que el disco sea de solo lectura o que no tengas permiso para escribir ahí. "
+                    + "Presiona \"Cambiar carpeta\" y elige otra.", exception);
+            }
         }
 
         void ReportCancellation(string extractionDirectory)

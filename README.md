@@ -12,7 +12,7 @@ Funciona en Windows 8, 8.1, 10 y 11, que ya traen .NET Framework 4.5 o superior.
 
 - Extrae momentos sueltos, rangos `desde – hasta` o todo el video. Los tiempos se escriben como en el reproductor (horas, minutos, segundos) y se validan contra la duración del video.
 - De cada segundo `T` extrae todos sus fotogramas, del instante `T` hasta antes de `T+1`.
-- Guarda cada extracción en una carpeta nueva, `Fotogramas_<video>_<epoch>`, junto al video original.
+- Guarda cada extracción en una carpeta nueva, `Fotogramas_<video>_<epoch>`, junto al video original o en la carpeta que se elija. Si el video está en un disco de solo lectura (DVD, bloqueador de escritura), lo detecta y pide elegir otra carpeta.
 - El reporte `hashes_fotogramas.txt` incluye SHA-256 y SHA-512 del video y de cada fotograma, el formato del video, los tiempos solicitados y la versión y parámetros de FFmpeg usados.
 - Antes de extraer estima cuántos fotogramas saldrán y cuánto espacio ocuparán, y no deja empezar si no hay espacio suficiente en el disco.
 - Videos con datos dañados: decodifica con `-flags2 +showall` para recuperar los fotogramas en vez de descartarlos (no altera videos sanos), cuenta los errores de decodificación y compara los fotogramas extraídos con los del archivo. Todo queda anotado en el reporte.

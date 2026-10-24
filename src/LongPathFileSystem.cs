@@ -22,6 +22,7 @@ namespace ExtractorFotogramas
         const uint CreateNew = 1;
         const uint OpenExisting = 3;
         const int ErrorFileNotFound = 2;
+        const uint ReadOnlyVolumeFlag = 0x80000;
 
         public static string GetFullPath(string path)
         {
@@ -44,6 +45,24 @@ namespace ExtractorFotogramas
             ulong freeBytes, totalBytes, totalFreeBytes;
             var available = GetDiskFreeSpaceExW(VolumeRoot(fullPath), out freeBytes, out totalBytes, out totalFreeBytes);
             return available ? (long?)freeBytes : null;
+        }
+
+        public static bool IsOnReadOnlyVolume(string fullPath)
+        {
+            uint serialNumber, maximumComponentLength, fileSystemFlags;
+            var known = GetVolumeInformationW(
+                VolumeRoot(fullPath), null, 0, out serialNumber, out maximumComponentLength, out fileSystemFlags, null, 0);
+            return known && (fileSystemFlags & ReadOnlyVolumeFlag) != 0;
+        }
+
+        public static string WithSeparator(string directory)
+        {
+            return directory.EndsWith("\\", StringComparison.Ordinal) ? directory : directory + "\\";
+        }
+
+        public static string ForDisplay(string directoryWithSeparator)
+        {
+            return directoryWithSeparator.Length > 3 ? directoryWithSeparator.TrimEnd('\\') : directoryWithSeparator;
         }
 
         public static bool FileExists(string path)
@@ -181,6 +200,12 @@ namespace ExtractorFotogramas
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool GetDiskFreeSpaceExW(string directoryName, out ulong freeBytesAvailable, out ulong totalBytes, out ulong totalFreeBytes);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool GetVolumeInformationW(
+            string rootPathName, StringBuilder volumeName, uint volumeNameSize, out uint serialNumber,
+            out uint maximumComponentLength, out uint fileSystemFlags, StringBuilder fileSystemName, uint fileSystemNameSize);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
