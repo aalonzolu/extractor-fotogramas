@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versión a publicar, sin la v (por ejemplo 1.6.1)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  FFMPEG_VERSION: "8.0.1"
+  PACKAGE_DIR: "Extractor de Fotogramas"
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Resolver versión
+        id: version
+        shell: pwsh
+        run: |
+          $version = if ("${{ github.event_name }}" -eq "push") { "${{ github.ref_name }}".TrimStart("v") } else { "${{ inputs.version }}" }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Compilar
+        run: dotnet build src -c Release -o build -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Descargar FFmpeg
+        shell: pwsh
+        run: |
+          $url = "https://github.com/GyanD/codexffmpeg/releases/download/$env:FFMPEG_VERSION/ffmpeg-$env:FFMPEG_VERSION-essentials_build.zip"
+          Invoke-WebRequest $url -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-download
+
+      - name: Armar paquete portable
+        id: package
+        shell: pwsh
+        run: |
+          $ffmpegRoot = "ffmpeg-download/ffmpeg-$env:FFMPEG_VERSION-essentials_build"
+          New-Item -ItemType Directory -Path "$env:PACKAGE_DIR/ffmpeg" | Out-Null
+          Copy-Item build/ExtractorFotogramas.exe, build/ExtractorFotogramas.exe.config, package/LEEME.txt $env:PACKAGE_DIR
+          Copy-Item "$ffmpegRoot/bin/ffmpeg.exe", "$ffmpegRoot/bin/ffprobe.exe" "$env:PACKAGE_DIR/ffmpeg"
+          Copy-Item "$ffmpegRoot/LICENSE" "$env:PACKAGE_DIR/ffmpeg/LICENSE.txt"
+          $zip = "ExtractorFotogramas-${{ steps.version.outputs.version }}-portable.zip"
+          Compress-Archive -Path $env:PACKAGE_DIR -DestinationPath $zip
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+
+      - name: Publicar release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $notes = @"
+          Descarga **${{ steps.package.outputs.zip }}**, descomprímelo y abre ``ExtractorFotogramas.exe``. No requiere instalación.
+
+          Incluye FFmpeg $env:FFMPEG_VERSION (compilación essentials de gyan.dev, licencia GPL).
+          "@
+          gh release create "v$version" "${{ steps.package.outputs.zip }}" --title "Extractor de Fotogramas $version" --notes $notes --target $env:GITHUB_SHA --latest

@@ -1,0 +1,59 @@
+﻿EXTRACTOR DE FOTOGRAMAS
+============================================================
+
+CÓMO USARLO
+1. Abre ExtractorFotogramas.exe (doble clic). No requiere instalación.
+
+2. Elige el video: arrástralo al recuadro punteado o haz clic en él para
+   buscarlo. El programa muestra su duración, resolución y fotogramas por
+   segundo. También puedes soltar el video sobre ExtractorFotogramas.exe.
+
+   Videos exportados de un DVR (.h264, .h265 sin contenedor): estos
+   archivos no indican cuántos fotogramas por segundo tienen. El programa
+   te pide ese dato; revísalo en el reproductor o en la configuración del
+   DVR, porque de él dependen los tiempos, la duración y el número de
+   fotogramas.
+
+3. Elige qué extraer:
+   - "Momentos o rangos del video": escribe las horas, minutos y segundos
+     tal como aparecen en el reproductor y presiona "Agregar" (o Enter).
+     Para varios segundos seguidos marca "Extraer un rango de tiempo" y
+     llena "Desde" y "Hasta". Al lado se muestra el equivalente en
+     segundos (por ejemplo, 00:01:05 = segundo 65). Puedes agregar varios;
+     para quitar uno, selecciónalo y presiona "Quitar".
+     De cada segundo se extraen todos sus fotogramas.
+   - "Todo el video": extrae todos los fotogramas.
+   Antes de extraer se muestra cuántos fotogramas se generarán y cuánto
+   espacio ocuparán. Si no hay espacio suficiente en el disco, avisa.
+
+4. Presiona "Extraer fotogramas" y espera los 3 pasos:
+   hashes del video original, extracción y reporte de hashes.
+   Al terminar puedes abrir la carpeta, ver el reporte o hacer otra
+   extracción del mismo video.
+
+RESULTADO
+Los fotogramas (PNG) y el reporte hashes_fotogramas.txt se guardan junto al
+video original, en una carpeta nueva por cada extracción:
+  Fotogramas_<nombre del video>_<fecha en epoch>
+Así nunca se mezclan resultados de extracciones distintas.
+
+El reporte incluye los hashes SHA-256 y SHA-512 del video original y de
+cada fotograma, la fecha, los tiempos solicitados, el formato del video y
+la versión y parámetros de FFmpeg usados.
+
+Si el video tiene partes dañadas (frecuente en archivos de DVR), el
+programa recupera todos los fotogramas posibles, avisa al terminar y lo
+anota en el reporte. Algunos fotogramas pueden verse con manchas o bloques.
+
+REQUISITOS
+- Windows 8, 8.1, 10 u 11.
+- FFmpeg ya viene incluido en la carpeta "ffmpeg" (compilación
+  "essentials" de gyan.dev, licencia GPL: ver ffmpeg/LICENSE.txt).
+  Para usar otra versión, reemplaza ffmpeg.exe y ffprobe.exe en esa
+  carpeta. En Windows 8, si FFmpeg no abre, usa una versión de FFmpeg
+  compatible con ese sistema.
+
+Funciona con rutas y nombres de archivo largos (más de 260 caracteres),
+sin necesidad de renombrar el video.
+
+La carpeta completa se puede copiar a una USB o a otro equipo.

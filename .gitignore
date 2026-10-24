@@ -1,0 +1,6 @@
+bin/
+obj/
+build/
+dist/
+*.zip
+.DS_Store
